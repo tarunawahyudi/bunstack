@@ -1,6 +1,14 @@
-import { Elysia, NotFoundError, ParseError } from 'elysia'
+import { Elysia, NotFoundError, ParseError, ValidationError } from 'elysia'
 import { logger } from '@shared/util/logger.util'
 import { AppException } from '@core/exception/app.exception'
+
+function getValidationErrors(error: ValidationError) {
+  return error.all.map((item) => ({
+    path: 'path' in item ? item.path : undefined,
+    message: 'message' in item ? item.message : item.summary,
+    summary: item.summary,
+  }))
+}
 
 export const errorMiddleware = (app: Elysia) =>
   app.onError(({ error, set, request }) => {
@@ -28,6 +36,20 @@ export const errorMiddleware = (app: Elysia) =>
         code: 'NOT_FOUND',
         message: 'The requested resource was not found',
         error: null,
+        timestamp: new Date().toISOString()
+      }
+    }
+
+    if (error instanceof ValidationError) {
+      const errors = getValidationErrors(error)
+
+      logger.warn(`${method} ${path} 400 - Validation failed`)
+      set.status = 400
+      return {
+        success: false,
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        errors,
         timestamp: new Date().toISOString()
       }
     }
