@@ -15,6 +15,9 @@ The project is designed as a practical foundation for production-oriented APIs. 
 - Startup banner and application metadata log.
 - Standard success and error response shapes.
 - CSV-backed error dictionary with generated ticket codes.
+- JWT authentication with access and refresh tokens.
+- Protected user read endpoints.
+- Health check endpoint with database connectivity check.
 - Daily application logs under `resources/logs`.
 - Swagger/OpenAPI documentation.
 - CORS configuration through `application.yaml`.
@@ -282,8 +285,8 @@ Routes are currently mounted directly under `/users`.
 | Method | Path | Description |
 | --- | --- | --- |
 | `POST` | `/users` | Create a new user. |
-| `GET` | `/users` | Get all users. |
-| `GET` | `/users/:email` | Get a user by email. |
+| `GET` | `/users` | Get all users. Requires Bearer access token. |
+| `GET` | `/users/:email` | Get a user by email. Requires Bearer access token. |
 
 Example request:
 
@@ -314,6 +317,82 @@ Successful response shape:
 User responses are mapped through `src/app/module/user/dto/user.response.dto.ts`, so sensitive fields such as `password` are not returned by create, get by email, or get all endpoints.
 
 The `api.prefix` value exists in configuration, but the current route registration does not automatically prepend it.
+
+## Authentication
+
+Authentication is implemented in the `auth` module using JWT access and refresh tokens.
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/auth/login` | Login with email and password. |
+| `POST` | `/auth/refresh` | Issue a new token pair from a refresh token. |
+| `GET` | `/auth/me` | Get the authenticated user. Requires Bearer access token. |
+
+Login request:
+
+```http
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+Login response:
+
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "tokenType": "Bearer",
+    "accessToken": "<jwt-access-token>",
+    "refreshToken": "<jwt-refresh-token>",
+    "expiresIn": 3600,
+    "user": {
+      "id": 1,
+      "email": "user@example.com"
+    }
+  },
+  "timestamp": "2026-01-01T00:00:00.000Z"
+}
+```
+
+Protected endpoints require this header:
+
+```http
+Authorization: Bearer <jwt-access-token>
+```
+
+User passwords are hashed before being stored. Existing rows created before this behavior was added should be recreated or migrated before login will work for those users.
+
+## Health Check
+
+The health endpoint checks the application process and database connectivity.
+
+```http
+GET http://localhost:3000/health
+```
+
+Successful response:
+
+```json
+{
+  "success": true,
+  "message": "Health check passed",
+  "data": {
+    "status": "ok",
+    "uptime": 120.5,
+    "timestamp": "2026-01-01T00:00:00.000Z",
+    "database": {
+      "status": "ok"
+    }
+  },
+  "timestamp": "2026-01-01T00:00:00.000Z"
+}
+```
 
 ## Error Handling
 

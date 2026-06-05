@@ -20,6 +20,10 @@ export class UserRepositoryImpl implements UserRepository {
     return this.userRepository.find()
   }
 
+  findById(id: number): Promise<User | null> {
+    return this.userRepository.findOne({ where: { id } })
+  }
+
   findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } })
   }

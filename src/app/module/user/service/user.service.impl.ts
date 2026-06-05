@@ -12,7 +12,11 @@ export class UserServiceImpl implements UserService {
     const existingUser = await this.userRepository.findByEmail(data.email!)
     if (existingUser) throw new AppException("USER-001")
 
-    const user = this.userRepository.create(data)
+    const user = this.userRepository.create({
+      ...data,
+      password: await Bun.password.hash(data.password!),
+    })
+
     return this.userRepository.save(user)
   }
 

@@ -12,5 +12,15 @@ export const swaggerPlugin = swagger({
       version: config.app.version,
       description: config.swagger.description,
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: "Enter your JWT access token. Example: Bearer <token>",
+        },
+      },
+    },
   },
 })

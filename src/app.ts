@@ -1,6 +1,8 @@
 import { Elysia } from "elysia"
 import { setupContainer } from "@core/container"
 import { registerUserRoutes } from "@module/user/user.route"
+import { registerAuthRoutes } from "@module/auth/auth.route"
+import { registerHealthRoutes } from "@module/health/health.route"
 import { startup } from "@core/startup"
 import { swaggerPlugin } from "@core/config/swagger.config"
 import { loggerMiddleware } from '@core/middleware/logger.middleware'
@@ -44,8 +46,10 @@ async function main() {
 
     /**
      * Application routes
-     * Registers all route handlers for the User module
+     * Registers all application route handlers
      */
+    .use(registerHealthRoutes)
+    .use(registerAuthRoutes)
     .use(registerUserRoutes)
 
   // Run startup tasks

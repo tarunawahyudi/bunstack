@@ -1,6 +1,8 @@
 code,module,message,logLevel,httpStatus
 AUTH-001,AUTH,Invalid credentials,warn,401
 AUTH-002,AUTH,Token expired,warn,401
+AUTH-003,AUTH,Invalid token,warn,401
+AUTH-004,AUTH,Authorization token is required,warn,401
 USER-001,USER,Email already exists,warn,400
 USER-002,USER,User not found,warn,404
 DB-001,DB,Database connection lost,error,500

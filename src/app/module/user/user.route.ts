@@ -2,6 +2,7 @@ import {Elysia, t} from "elysia"
 import {UserControllerImpl} from "@module/user/controller/user.controller.impl"
 import {container} from "tsyringe"
 import {ROOT} from "@shared/constant/commons.constant"
+import {requireAuth} from "@core/middleware/auth.middleware"
 
 export function registerUserRoutes(app: Elysia) {
   const userController = container.resolve(UserControllerImpl)
@@ -20,16 +21,20 @@ export function registerUserRoutes(app: Elysia) {
         }
       )
       .get("/:email", userController.getByEmail.bind(userController), {
+          beforeHandle: requireAuth,
           detail: {
             tags: ["User"],
-            summary: "Get user by email"
+            summary: "Get user by email",
+            security: [{ bearerAuth: [] }],
           }
         }
       )
       .get(ROOT, userController.getAll.bind(userController), {
+          beforeHandle: requireAuth,
           detail: {
             tags: ["User"],
-            summary: "Get all users"
+            summary: "Get all users",
+            security: [{ bearerAuth: [] }],
           }
         }
       )
