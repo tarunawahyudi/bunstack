@@ -9,7 +9,7 @@ The project is designed as a practical foundation for production-oriented APIs. 
 - Bun runtime with TypeScript-first development.
 - Elysia HTTP server with global middleware registration.
 - TypeORM PostgreSQL datasource.
-- Modular architecture using controller, service, repository, entity, and route layers.
+- Modular architecture using route, controller, service, repository, entity, and DTO layers.
 - Dependency injection with `tsyringe` and `reflect-metadata`.
 - YAML-based application configuration with environment variable interpolation.
 - Startup banner and application metadata log.
@@ -87,10 +87,10 @@ Startup flow:
 The current user module follows this structure:
 
 ```text
-route -> controller -> service -> repository -> TypeORM entity
+route -> controller -> DTO mapper -> service -> repository -> TypeORM entity
 ```
 
-This keeps HTTP concerns, business logic, persistence logic, and database mapping separated.
+This keeps HTTP concerns, request/response shapes, business logic, persistence logic, and database mapping separated.
 
 ## Requirements
 
@@ -198,13 +198,23 @@ Important configuration sections:
 | `features` | Feature flags. |
 | `misc` | Miscellaneous application settings. |
 
-The current TypeORM datasource in `src/app/lib/datasource.ts` reads database connection values directly from environment variables:
+The TypeORM datasource in `src/app/lib/datasource.ts` reads database settings from the resolved application config:
 
-- `DB_HOST`
-- `DB_PORT`
-- `DB_USER`
-- `DB_PASS`
-- `DB_NAME`
+```text
+application.yaml -> config loader -> config.database -> TypeORM DataSource
+```
+
+The database section is still environment-driven through YAML placeholders:
+
+```yaml
+database:
+  client: postgresql
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  username: ${DB_USER}
+  password: ${DB_PASS}
+  database: ${DB_NAME}
+```
 
 For local development, `synchronize: true` is enabled. Disable it and use migrations before running production workloads.
 
@@ -295,12 +305,13 @@ Successful response shape:
   "message": "User created successfully",
   "data": {
     "id": 1,
-    "email": "user@example.com",
-    "password": "password123"
+    "email": "user@example.com"
   },
   "timestamp": "2026-01-01T00:00:00.000Z"
 }
 ```
+
+User responses are mapped through `src/app/module/user/dto/user.response.dto.ts`, so sensitive fields such as `password` are not returned by create, get by email, or get all endpoints.
 
 The `api.prefix` value exists in configuration, but the current route registration does not automatically prepend it.
 
@@ -471,6 +482,7 @@ src/app/module/<module-name>/
 |-- <module-name>.route.ts
 |-- <module-name>.container.ts
 |-- controller/
+|-- dto/
 |-- service/
 |-- repository/
 `-- entity/
@@ -478,16 +490,18 @@ src/app/module/<module-name>/
 
 Recommended flow:
 
-1. Create the TypeORM entity.
-2. Create the repository interface and implementation.
-3. Create the service interface and implementation.
-4. Create the controller interface and implementation.
-5. Register dependencies in the module container.
-6. Register routes in the module route file.
-7. Add the module registration to `setupContainer()`.
-8. Add the route registration to `src/app.ts`.
-9. Add error codes to `resources/dictionary/errors.csv`.
-10. Add or update UML diagrams when the feature affects documented flows.
+1. Create request and response DTOs for external API payloads.
+2. Create the TypeORM entity for persistence.
+3. Create the repository interface and implementation.
+4. Create the service interface and implementation.
+5. Create the controller interface and implementation.
+6. Map entities to response DTOs before returning data from controllers.
+7. Register dependencies in the module container.
+8. Register routes in the module route file.
+9. Add the module registration to `setupContainer()`.
+10. Add the route registration to `src/app.ts`.
+11. Add error codes to `resources/dictionary/errors.csv`.
+12. Add or update UML diagrams when the feature affects documented flows.
 
 ## Path Aliases
 
